@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Anny HOF">
+<meta name="theme-color" content="#0d0618">
+<title>Anny Karoline · Cronograma HOF</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0618;
+  --card: #1e1235;
+  --card2: #160d28;
+  --accent: #c9a96e;
+  --rose: #d4759a;
+  --text: #f0e8ff;
+  --muted: #9880c0;
+  --done-bg: #1a3320;
+  --done-text: #7bc87b;
+  --border: rgba(201,169,110,0.15);
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html { scroll-behavior:smooth; }
+body {
+  background:var(--bg);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+  padding-bottom:calc(env(safe-area-inset-bottom) + 20px);
+}
+body::before {
+  content:'';
+  position:fixed;
+  top:-20%; right:-20%;
+  width:60vw; height:60vw;
+  background:radial-gradient(circle, rgba(201,169,110,0.07) 0%, transparent 70%);
+  pointer-events:none; z-index:0;
+}
+
+/* HEADER */
+.header {
+  position:sticky; top:0; z-index:50;
+  padding:48px 20px 14px;
+  background:linear-gradient(to bottom, var(--bg) 75%, transparent);
+  backdrop-filter:blur(16px);
+}
+.header-row { display:flex; align-items:center; justify-content:space-between; }
+.logo { font-family:'Playfair Display',serif; font-size:21px; font-weight:700; color:var(--accent); }
+.logo small { display:block; font-family:'DM Sans',sans-serif; font-size:10px; font-weight:300; color:var(--muted); letter-spacing:.14em; text-transform:uppercase; margin-top:1px; }
+.day-pill { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:5px 13px; font-size:12px; color:var(--accent); font-weight:500; }
+.prog-wrap { margin-top:12px; height:2px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; }
+.prog-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--rose)); transition:width .5s ease; }
+.prog-row { display:flex; justify-content:space-between; margin-top:5px; font-size:10px; color:var(--muted); letter-spacing:.04em; }
+
+/* CONTENT */
+.content { padding:0 16px; position:relative; z-index:1; }
+
+/* MINI CAL */
+.mini-cal { display:flex; gap:6px; margin-bottom:18px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
+.mini-cal::-webkit-scrollbar { display:none; }
+.cal-pill {
+  flex-shrink:0; width:46px; border-radius:12px; padding:8px 0;
+  text-align:center; cursor:pointer; border:1px solid transparent; transition:all .2s;
+}
+.cal-pill.active { background:var(--card); border-color:var(--accent); }
+.cal-pill .wd { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+.cal-pill .dn { font-family:'Playfair Display',serif; font-size:19px; color:var(--text); margin-top:1px; line-height:1; }
+.cal-pill.active .dn { color:var(--accent); }
+.cal-pill .dots { display:flex; justify-content:center; gap:3px; margin-top:5px; min-height:5px; }
+.dot { width:4px; height:4px; border-radius:50%; background:rgba(255,255,255,0.15); }
+.dot.done { background:var(--done-text); }
+
+/* DATE CARD */
+.date-card {
+  margin-bottom:18px; padding:16px 18px;
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  display:flex; align-items:center; gap:16px;
+}
+.date-num { font-family:'Playfair Display',serif; font-size:44px; font-weight:700; color:var(--accent); line-height:1; min-width:54px; }
+.date-info { flex:1; }
+.date-wd { font-size:16px; font-weight:500; text-transform:capitalize; }
+.date-mo { font-size:12px; color:var(--muted); margin-top:2px; text-transform:capitalize; }
+.nav-col { display:flex; flex-direction:column; gap:6px; }
+.nav-btn {
+  width:32px; height:32px; border-radius:8px;
+  background:rgba(201,169,110,0.08); border:1px solid var(--border);
+  color:var(--accent); font-size:13px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:all .2s;
+}
+.nav-btn:active { transform:scale(.88); background:rgba(201,169,110,0.2); }
+
+/* ACCUM */
+.accum {
+  display:none; align-items:center; gap:10px;
+  background:rgba(212,117,154,0.1); border:1px solid rgba(212,117,154,0.25);
+  border-radius:12px; padding:11px 15px; margin-bottom:16px;
+  font-size:13px; color:var(--rose);
+}
+.accum.on { display:flex; }
+
+/* SECTION LABEL */
+.sec-label { font-size:10px; font-weight:500; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; padding-left:2px; }
+
+/* TASK CARD */
+.task-card {
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  padding:14px 15px; margin-bottom:10px;
+  display:flex; align-items:flex-start; gap:12px;
+  position:relative; overflow:hidden;
+  animation:fadeUp .3s ease both;
+  cursor:pointer;
+  transition:border-color .2s, background .2s;
+}
+.task-card:active { background:#261840; }
+.task-card::before {
+  content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+  background:var(--accent); opacity:0; transition:opacity .3s;
+}
+.task-card.carried::before { background:var(--rose); opacity:1; }
+.task-card.is-done { background:var(--done-bg); border-color:rgba(123,200,123,0.12); }
+.task-card.is-done::before { background:var(--done-text); opacity:1; }
+
+.check-btn {
+  flex-shrink:0; width:26px; height:26px; border-radius:50%;
+  border:2px solid rgba(201,169,110,0.3); background:transparent;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  margin-top:2px; transition:all .25s; position:relative; z-index:2;
+}
+.check-btn:active { transform:scale(.82); }
+.check-btn.on { background:var(--done-text); border-color:var(--done-text); }
+.check-icon { display:none; font-size:12px; }
+.check-btn.on .check-icon { display:block; }
+.check-dot { width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.12); }
+.check-btn.on .check-dot { display:none; }
+
+.task-body { flex:1; min-width:0; }
+.task-type {
+  font-size:9px; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
+  padding:2px 8px; border-radius:20px; margin-bottom:6px; display:inline-block;
+}
+.t-reels    { background:rgba(212,117,154,.15); color:var(--rose); }
+.t-carrossel{ background:rgba(201,169,110,.15); color:var(--accent); }
+.t-estatico { background:rgba(120,100,200,.15); color:#a090e0; }
+.t-caixinha { background:rgba(80,180,200,.15);  color:#80d0d8; }
+.t-destaque { background:rgba(200,150,80,.15);  color:#d4a060; }
+
+.task-title { font-size:14px; font-weight:500; line-height:1.4; }
+.is-done .task-title { color:var(--done-text); text-decoration:line-through; opacity:.7; }
+.task-hint { font-size:11px; color:var(--muted); margin-top:3px; }
+.carried-tag { font-size:10px; color:var(--rose); margin-top:5px; }
+.open-arrow { font-size:14px; color:var(--muted); margin-left:4px; flex-shrink:0; margin-top:4px; align-self:center; }
+
+/* MODAL */
+.overlay {
+  position:fixed; inset:0; z-index:200;
+  background:rgba(5,2,15,0.85);
+  backdrop-filter:blur(8px);
+  display:flex; align-items:flex-end;
+  opacity:0; pointer-events:none;
+  transition:opacity .3s;
+}
+.overlay.open { opacity:1; pointer-events:all; }
+.sheet {
+  width:100%; max-height:90vh;
+  background:#1a0f30;
+  border-radius:20px 20px 0 0;
+  border-top:1px solid var(--border);
+  overflow:hidden;
+  display:flex; flex-direction:column;
+  transform:translateY(100%);
+  transition:transform .35s cubic-bezier(.4,0,.2,1);
+}
+.overlay.open .sheet { transform:translateY(0); }
+
+.sheet-handle { width:36px; height:4px; background:rgba(255,255,255,0.15); border-radius:2px; margin:12px auto 0; flex-shrink:0; }
+.sheet-header {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  padding:16px 20px 14px; border-bottom:1px solid var(--border); flex-shrink:0;
+}
+.sheet-type { font-size:10px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; margin-bottom:6px; }
+.sheet-title { font-family:'Playfair Display',serif; font-size:19px; font-weight:700; color:var(--text); line-height:1.3; padding-right:10px; }
+.close-btn {
+  flex-shrink:0; width:30px; height:30px; border-radius:50%;
+  background:rgba(255,255,255,0.07); border:none; color:var(--muted);
+  font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  margin-top:2px;
+}
+.close-btn:active { background:rgba(255,255,255,0.14); }
+
+.sheet-body { overflow-y:auto; padding:20px; flex:1; -webkit-overflow-scrolling:touch; }
+.sheet-section { margin-bottom:22px; }
+.sheet-section-label {
+  font-size:10px; font-weight:600; letter-spacing:.15em; text-transform:uppercase;
+  color:var(--accent); margin-bottom:10px; display:flex; align-items:center; gap:8px;
+}
+.sheet-section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+.sheet-text { font-size:14px; line-height:1.75; color:rgba(240,232,255,0.85); white-space:pre-wrap; }
+.sheet-slide { background:var(--card2); border-radius:10px; padding:12px 14px; margin-bottom:8px; font-size:13px; line-height:1.6; color:rgba(240,232,255,0.8); border-left:3px solid var(--accent); }
+.sheet-slide strong { color:var(--accent); font-size:11px; letter-spacing:.06em; display:block; margin-bottom:3px; text-transform:uppercase; }
+
+.sheet-footer { padding:16px 20px; padding-bottom:calc(16px + env(safe-area-inset-bottom)); border-top:1px solid var(--border); flex-shrink:0; }
+.done-toggle-btn {
+  width:100%; padding:14px; border-radius:12px; border:none; cursor:pointer;
+  font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600;
+  background:linear-gradient(135deg, rgba(201,169,110,0.15), rgba(201,169,110,0.05));
+  border:1px solid var(--border); color:var(--accent);
+  transition:all .2s;
+}
+.done-toggle-btn.is-done { background:var(--done-bg); border-color:rgba(123,200,123,0.3); color:var(--done-text); }
+.done-toggle-btn:active { transform:scale(.97); }
+
+/* NOTIF */
+.notif {
+  position:fixed; top:0; left:0; right:0; z-index:300;
+  background:var(--accent); color:#0d0618;
+  padding:14px 20px; font-size:13px; font-weight:600;
+  display:flex; align-items:center; gap:8px;
+  transform:translateY(-100%); transition:transform .35s cubic-bezier(.4,0,.2,1);
+}
+.notif.show { transform:translateY(0); }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+
+<div class="notif" id="notif"><span id="notifIcon">✅</span><span id="notifMsg"></span></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-row">
+    <div class="logo">Anny Karoline<small>Cronograma HOF · 2026</small></div>
+    <div class="day-pill" id="dayPill">Dia 1</div>
+  </div>
+  <div class="prog-wrap"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  <div class="prog-row"><span id="progLabel">0 de 3 tarefas</span><span id="progPct">0%</span></div>
+</div>
+y
+<!-- CONTENT -->
+<div class="content">
+  <div class="mini-cal" id="miniCal"></div>
+
+  <div class="date-card">
+    <div class="date-num" id="dateNum">15</div>
+    <div class="date-info">
+      <div class="date-wd" id="dateWd">sexta-feira</div>
+      <div class="date-mo" id="dateMo">maio de 2026</div>
+    </div>
+    <div class="nav-col">
+      <button class="nav-btn" onclick="navigate(-1)">▲</button>
+      <button class="nav-btn" onclick="navigate(1)">▼</button>
+    </div>
+  </div>
+
+  <div class="accum" id="accum"><span>🔴</span><span id="accumMsg"></span></div>
+
+  <div class="sec-label">Tarefas do dia</div>
+  <div id="taskList"></div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="closeModal(event)">
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div>
+        <div class="sheet-type" id="mType"></div>
+        <div class="sheet-title" id="mTitle"></div>
+      </div>
+      <button class="close-btn" onclick="closeSheet()">✕</button>
+    </div>
+    <div class="sheet-body" id="mBody"></div>
+    <div class="sheet-footer">
+      <button class="done-toggle-btn" id="doneBtn" onclick="toggleFromModal()">✓ Marcar como feito</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DADOS COMPLETOS DO CRONOGRAMA
+// ============================================================
+const TASKS = {
+  1: [
+    {
+      id:'d1t1', type:'reels',
+      title:'Roteiro 1: O Ciclo da Estagnação',
+      hint:'Reels · Leia a legenda',
+      sections:[
+        { label:'📹 Direção de vídeo', text:'Você em um loop visual — organizando a bancada ou andando no consultório — com semblante pensativo.' },
+        { label:'🎬 Título', text:'O looping invisível que está matando a sua carreira na Harmonização.' },
+        { label:'📝 Legenda completa', text:`Você sente que está patinando no mesmo lugar? O diagnóstico é claro, mas dói ouvir: você entrou no ciclo da paralisia. Não tem dinheiro para o curso premium, então não compra o material de ponta. Sem o material, você não oferece o procedimento de alto valor. Sem oferecer, você não vende. Sem vender, você não pratica. E sem prática, a insegurança se torna sua única companheira de consultório.` },
+        { label:'🔢 Pontos da legenda', slides:[
+          '1️⃣ A espera pela "condição ideal": Ela não existe. Quem espera ter dinheiro para se especializar acaba gastando o pouco que tem pagando boletos de uma clínica que não lucra.',
+          '2️⃣ O medo de investir no escuro: Você continua fazendo cursos rasos que te ensinam a "vender ampolas", enquanto o mercado High Ticket exige planejamento.',
+          '3️⃣ A economia que sai caro: Usar produtos de segunda por medo de não ter margem só atrai o paciente que faz leilão de preço.',
+          '4️⃣ A falta de um método: Sem um passo a passo, cada intercorrência vira um pânico e cada orçamento vira uma desculpa.',
+          '5️⃣ A síndrome do "depois eu faço": Enquanto você espera, a clínica vizinha domina o conceito 3D e leva seus pacientes.',
+          '6️⃣ A procrastinação disfarçada de cautela.',
+          '7️⃣ O isolamento clínico: Tentar resolver tudo sozinha sem um mentor.',
+        ]},
+        { label:'📣 CTA', text:'Saia desse looping antes que o mercado te esqueça. Quer quebrar esse ciclo e dominar a estética de alto valor? Me siga aqui para virar o jogo!' },
+        { label:'💡 Dica de produção', text:'Antes de subir no Reels: duplique o vídeo, o duplicado você posta como Teste, o original posta normalmente.' },
+      ]
+    },
+    {
+      id:'d1t2', type:'caixinha',
+      title:'Caixinha 1: O Looping da Escassez',
+      hint:'Stories · Caixinha de perguntas',
+      sections:[
+        { label:'❓ Pergunta do seguidor', text:'"Agenda vazia, material vencendo e o cartão no limite. Como vou investir em curso se não entra um real de preenchimento?"' },
+        { label:'💬 Resposta sugerida', text:`O seu problema não é falta de dinheiro, é falta de prioridade e excesso de desculpas. Você está esperando o "momento ideal" onde o dinheiro vai cair do céu para você se especializar, mas a verdade é que enquanto você não dominar o 3D, você vai continuar sendo a "doutora do botox baratinho" que ninguém valoriza.
+
+Sabe por que você não tem paciente? Porque você exala insegurança. O paciente sente que você está treinando nele. Quer sair desse looping? Pare de comprar blusinha e sapato e invista no que te faz cobrar 5 mil em uma única sessão.
+
+O conhecimento é a única coisa que ninguém te tira, mas a sua omissão está tirando o seu futuro. Ou você se posiciona agora, ou continua sendo esquecida pelo mercado. Qual vai ser?` },
+        { label:'📣 CTA', text:'Chamar para o link da bio ao final da resposta.' },
+        { label:'💡 Dica', text:'Pode ser gravado caminhando, tomando café ou em qualquer momento do dia — não precisa de cenário elaborado!' },
+      ]
+    },
+    {
+      id:'d1t3', type:'reels',
+      title:'"Leia a Legenda" 2: Por que ter agenda lotada…',
+      hint:'Reels · Leia a legenda',
+      sections:[
+        { label:'📹 Direção de vídeo', text:'Você olhando para uma agenda ou celular, com um ar de cansaço, mas decidida.' },
+        { label:'🎬 Título', text:'Por que ter a agenda lotada de Botox pode ser o seu maior prejuízo.' },
+        { label:'📝 Legenda completa', text:'Parece contra-intuitivo, mas a agenda cheia pode ser o sinal de que sua carreira está morrendo. Se você atende 15 pacientes por dia para "fazer volume", você não é uma especialista, é uma operária de seringas.' },
+        { label:'🔢 Pontos da legenda', slides:[
+          '1️⃣ O cansaço físico te impede de pensar estrategicamente.',
+          '2️⃣ O baixo ticket te escraviza: você trabalha muito para pagar o custo fixo e sobra quase nada.',
+          '3️⃣ O paciente de "promoção" não tem fidelidade; ele vai embora pelo próximo desconto de R$ 50.',
+          '4️⃣ Você não tem tempo para estudar casos complexos, entregando sempre o "básico".',
+          '5️⃣ O erro de não vender o Full Face: Você entrega um lábio lindo em um rosto que está "derretendo" por falta de estrutura.',
+          '6️⃣ A falta de visão 3D: Você foca no detalhe e esquece o rejuvenescimento global.',
+          '7️⃣ O medo de cobrar o justo: Você tem vergonha de passar um orçamento de R$ 10k porque nem você acredita que o seu trabalho vale isso.',
+        ]},
+        { label:'📣 CTA', text:'O High Ticket não é sobre luxo, é sobre liberdade e segurança técnica. Você está pronta para deixar de ser uma "vendedora de ampolas"? Comenta aqui embaixo qual o seu maior medo na hora de passar um orçamento alto!' },
+      ]
+    },
+  ],
+  2: [
+    {
+      id:'d2t1', type:'carrossel',
+      title:'Carrossel 1: Presa no Looping',
+      hint:'Feed · Carrossel 6 slides',
+      sections:[
+        { label:'🖼️ Slides', slides:[
+          'CAPA: "Ninguém te contou mas a prisão da harmonização facial não é cliente que não chega."',
+          'Slide 2: O maior erro é achar que você precisa de um estoque gigante para começar. O medo vem da falta de método, não da falta de ampolas.',
+          'Slide 3: Sem praticar, a insegurança cresce. Sem material, a venda morre antes de começar. Como quebrar isso?',
+          'Slide 4: Comece pelo planejamento 3D. Quando você vende o resultado final (High Ticket), o valor do material já está incluso no sinal do paciente.',
+          'Slide 5: Pare de ser refém da escassez. O lucro de um "Full Face" bem planejado paga seu estoque do mês todo.',
+          'Slide 6 (CTA): Você já se sentiu travada nesse ciclo? Comenta aqui "LOOPING" que eu quero te ajudar a sair dele.',
+        ]},
+        { label:'💡 Dica de produção', text:'Use layouts prontos na ferramenta de edição ou IA para gerar. Reaproveite o tema do Roteiro 1 do Dia 1.' },
+      ]
+    },
+    {
+      id:'d2t2', type:'estatico',
+      title:'Estático 2: Insegurança Técnica',
+      hint:'Feed · Post estático',
+      sections:[
+        { label:'📝 Texto completo', text:`O profissional que tem medo de causar uma necrose nunca vai faturar High Ticket.
+
+A insegurança técnica é o imposto que você paga por não dominar a anatomia 3D.
+
+Estude até o medo virar respeito, e o respeito virar autoridade.` },
+        { label:'📣 CTA', text:'Me conta: qual procedimento te dá mais medo hoje?' },
+      ]
+    },
+    {
+      id:'d2t3', type:'caixinha',
+      title:'Caixinha 3: Medo da Intercorrência',
+      hint:'Stories · Caixinha de perguntas',
+      sections:[
+        { label:'❓ Pergunta do seguidor', text:'"Tenho pânico de fazer nariz e causar uma necrose. Melhor focar só em bioestimulador que é mais seguro, né?"' },
+        { label:'💬 Resposta sugerida', text:`O medo é o esconderijo dos incompetentes técnicos. Se você tem pânico, é porque você não domina a anatomia, ponto. Fugir para o bioestimulador não resolve sua insegurança, só mascara sua falta de preparo.
+
+O High Ticket está justamente nos procedimentos que exigem maestria. Enquanto você foge do nariz ou do preenchimento estrutural, você entrega o seu mercado de bandeja para quem teve coragem de estudar o plano profundo.
+
+Necrose não se evita com "medinho", se evita com técnica 3D e protocolo de emergência na ponta da língua. Quer ser referência ou quer ser a profissional "café com leite" que só faz o que é fácil? Segurança vem do conhecimento, não da fuga.` },
+        { label:'📣 CTA', text:'Chamar para o link da bio ao final.' },
+      ]
+    },
+  ],
+  3: [
+    {
+      id:'d3t1', type:'reels',
+      title:'Roteiro 3: 7 Erros Técnicos',
+      hint:'Reels · Com número no título',
+      sections:[
+        { label:'📹 Direção de vídeo', text:'Close em um planejamento facial (pode ser um desenho ou foto de modelo) ou você analisando um rosto.' },
+        { label:'🎬 Título', text:'7 erros no preenchimento facial que deixam suas pacientes com "cara de plástico" (o 4º é o pior).' },
+        { label:'📝 Legenda', text:'Entregar um resultado artificial é o caminho mais rápido para nunca mais ver a paciente e, pior, ser criticada pelos colegas. A harmonização não é sobre preencher buracos, é sobre restaurar dimensões.' },
+        { label:'🔢 7 Erros', slides:[
+          '1️⃣ Focar no lábio sem estruturar o terço médio: O resultado é um rosto pesado e sem harmonia.',
+          '2️⃣ Ignorar o jogo de luz e sombra: Se você não entende o conceito 3D, você cria volumes onde deveria haver sombras.',
+          '3️⃣ Medo de intercorrências: Por pânico de necrose, você aplica menos do que o necessário, entregando um resultado "flat" e frustrante.',
+          '4️⃣ Aplicar pontos fixos (receita de bolo): Cada rosto é único. Protocolos engessados matam a sua arte.',
+          '5️⃣ Não saber manejar a Hyaluronidase: Se você não domina a reversão, você nunca terá segurança para ousar no High Ticket.',
+          '6️⃣ Negligenciar a anatomia profunda: Injetar por "instinto" é a receita para o desastre.',
+          '7️⃣ Falta de posicionamento: Se você não se vende como autoridade, a paciente vai questionar cada ML usado.',
+        ]},
+        { label:'📣 CTA', text:'Domine a técnica e o lucro será consequência. Se você quer segurança total nos seus procedimentos, compartilha este post com aquele colega que precisa ver isso!' },
+      ]
+    },
+    {
+      id:'d3t2', type:'carrossel',
+      title:'Carrossel 2: Por que seus lábios ficam "flat"?',
+      hint:'Feed · Carrossel 6 slides',
+      sections:[
+        { label:'🖼️ Slides', slides:[
+          'CAPA: "Por que seus lábios ficam flat (retos) e sem dimensão?"',
+          'Slide 2: O erro comum: focar apenas no volume e esquecer das luzes e sombras do rosto.',
+          'Slide 3: Um lábio High Ticket precisa conversar com o queixo e com o nariz. É o que chamamos de visão 3D.',
+          'Slide 4: Se você só vende "1ml", você é comparada pelo preço. Se vende contorno e projeção artística, você vira autoridade.',
+          'Slide 5: Domine a anatomia para ter segurança. O medo de intercorrência some quando o método é preciso.',
+          'Slide 6 (CTA): Prefere um lábio natural ou volumão? Me conta sua maior dificuldade em labial nos comentários.',
+        ]},
+      ]
+    },
+    {
+      id:'d3t3', type:'caixinha',
+      title:'Caixinha 9: O Peso do Botox',
+      hint:'Stories · Caixinha de perguntas',
+      sections:[
+        { label:'❓ Pergunta do seguidor', text:'"Minha agenda está cheia, trabalho 12h por dia fazendo botox, mas no final do mês não sobra nada. O que tem de errado?"' },
+        { label:'💬 Resposta sugerida', text:`Tem tudo de errado! Você é uma escrava da sua própria agenda. O botox é a porta de entrada, mas se ele for o seu carro-chefe, você vai morrer de cansaço e continuar pobre.
+
+A margem do botox é minúscula. O lucro real está no planejamento estrutural, no High Ticket, onde você atende 2 pessoas e ganha o que ganharia atendendo 20.
+
+Você está trocando tempo por dinheiro, e o seu tempo é finito. Se você não migrar para procedimentos de alto valor percebido, vai ter um burnout antes de ter sucesso. Quer continuar sendo a "operária do botox" ou quer ser a artista da Harmonização 3D?` },
+        { label:'📣 CTA', text:'Chamar para o link da bio ao final.' },
+      ]
+    },
+  ],
+  4: [
+    {
+      id:'d4t1', type:'estatico',
+      title:'Estratégia de Busca para React (Remix)',
+      hint:'Ação estratégica · Busca de vídeos',
+      sections:[
+        { label:'📋 O que fazer', text:'Buscar pela hashtag para encontrar Reels com mais de 100k views, encontrando uma dor e fazer um react (reação) ao vídeo clicando no Remix e postar como Reels.' },
+        { label:'🔍 Hashtags por tema', slides:[
+          'O Looping da Escassez → #vidadecirurgia | Secundárias: #dentistas #esteticaavancada #posgraduacao',
+          'Medo de Intercorrência → #preenchimentolabial | Secundárias: #intercorrências #hof #labiosperfeitos',
+          'Síndrome do Vendedor de Ampolas → #harmonizacaofacial | Secundária: #preenchimentofacial',
+          'Insegurança no Planejamento → #anatomiafacial | Secundárias: #fullface #harmonizacao',
+          'Ambição de Autoridade → #consultoriodeestetica | Secundárias: #luxo #sucessoprofissional',
+          'Dificuldade de Venda → #dentistasp | Secundária: #medicinaestética',
+          'Falta de Prática → #primeiropaciente | Secundárias: #estudantedeestética #hofbrasil',
+        ]},
+        { label:'💡 O que buscar nos vídeos', text:'Vídeos de profissionais "organizando o que sobrou" ou falando que a agenda caiu. Expectativa x realidade. Lábios muito inchados ou com nódulos. Pacientes reclamando de preço. Marcações de rosto onde o profissional parece confuso. Tours de consultório de profissionais bem-sucedidos.' },
+      ]
+    },
+    {
+      id:'d4t2', type:'estatico',
+      title:'Estático 3: Valor vs. Preço',
+      hint:'Feed · Post estático',
+      sections:[
+        { label:'📝 Texto completo', text:`Paciente: "Mas na clínica X o ML é metade do preço."
+
+Eu: "Lá eles vendem produto, aqui eu entrego o seu rosto de 10 anos atrás com segurança."
+
+Se você não sabe explicar a diferença, o problema não é o preço dela, é o seu posicionamento.` },
+        { label:'📣 CTA', text:'Concorda? Comenta aqui embaixo.' },
+      ]
+    },
+    {
+      id:'d4t3', type:'reels',
+      title:'Roteiro 2: A Ilusão da Agenda Cheia',
+      hint:'Reels · Leia a legenda',
+      sections:[
+        { label:'📹 Direção de vídeo', text:'Você olhando para uma agenda ou celular, com um ar de cansaço, mas decidida.' },
+        { label:'🎬 Título', text:'Por que ter a agenda lotada de Botox pode ser o seu maior prejuízo.' },
+        { label:'📝 Legenda', text:'Parece contra-intuitivo, mas a agenda cheia pode ser o sinal de que sua carreira está morrendo. Se você atende 15 pacientes por dia para "fazer volume", você não é uma especialista, é uma operária de seringas.' },
+        { label:'🔢 Pontos', slides:[
+          '1️⃣ O cansaço físico te impede de pensar estrategicamente.',
+          '2️⃣ O baixo ticket te escraviza: você trabalha muito para pagar o custo fixo e sobra quase nada.',
+          '3️⃣ O paciente de "promoção" não tem fidelidade; ele vai embora pelo próximo desconto de R$ 50.',
+          '4️⃣ Você não tem tempo para estudar casos complexos, entregando sempre o "básico".',
+          '5️⃣ O erro de não vender o Full Face: Você entrega um lábio lindo em um rosto que está "derretendo" por falta de estrutura.',
+          '6️⃣ A falta de visão 3D: Você foca no detalhe e esquece o rejuvenescimento global.',
+          '7️⃣ O medo de cobrar o justo: Você tem vergonha de passar um orçamento de R$ 10k porque nem você acredita que o seu trabalho vale isso.',
+        ]},
+        { label:'📣 CTA', text:'O High Ticket não é sobre luxo, é sobre liberdade e segurança técnica. Comenta aqui embaixo qual o seu maior medo na hora de passar um orçamento alto!' },
+      ]
+    },
+  ],
+  5: [
+    {
+      id:'d5t1', type:'carrossel',
+      title:'Carrossel 3: Pare de Vender "ML"',
+      hint:'Feed · Carrossel 6 slides',
+      sections:[
+        { label:'🖼️ Slides', slides:[
+          'CAPA: "Pare de vender ML e comece a vender transformação."',
+          'Slide 2: Quando o paciente dita o quanto quer aplicar, quem manda no seu consultório é ele, não o seu conhecimento técnico.',
+          'Slide 3: O sistema tradicional te ensina a ser uma "clínica de seringa". Isso escraviza sua margem de lucro.',
+          'Slide 4: No Método 3D, você avalia as perdas estruturais. O paciente entende que não é sobre "botox", é sobre juventude.',
+          'Slide 5: O resultado High Ticket vem do planejamento, não do leilão de preço.',
+          'Slide 6 (CTA): Quer aprender a cobrar o que seu trabalho vale? Me segue para mais insights de posicionamento.',
+        ]},
+      ]
+    },
+    {
+      id:'d5t2', type:'caixinha',
+      title:'Caixinha 2: A "Vendedora de Ampolas"',
+      hint:'Stories · Caixinha de perguntas',
+      sections:[
+        { label:'❓ Pergunta do seguidor', text:'"A paciente chegou querendo 1ml de lábio pra \'dar um tchan\', mas o rosto dela tá todo derretido. O que eu faço?"' },
+        { label:'💬 Resposta sugerida', text:`Se você vender esse 1ml, você não é uma profissional, você é uma balconista de farmácia. O "tchan" que ela quer não está no lábio, está na sustentação que ela perdeu e você não teve coragem de diagnosticar.
+
+Aceitar o pedido de 1ml de uma paciente "derretida" é assinar um atestado de resultado medíocre. Você vai inflar um lábio em um rosto sem estrutura e o resultado vai ser um "efeito bico de pato" que vai queimar o seu nome na cidade.
+
+Aprenda de uma vez: quem dá o diagnóstico é você, não o paciente. Se ela não quer o planejamento 3D completo, deixa ela ir fazer no leilão de ampolas da esquina. O seu nome vale mais do que uma seringa vendida por desespero. Concorda ou vai continuar sendo refém de vontade de paciente?` },
+        { label:'📣 CTA', text:'Chamar para o link da bio.' },
+      ]
+    },
+    {
+      id:'d5t3', type:'estatico',
+      title:'Estático 1: Looping Financeiro',
+      hint:'Feed · Post estático',
+      sections:[
+        { label:'📝 Texto completo', text:`"Não compro material porque não tenho paciente. Não tenho paciente porque não pratico. Não pratico porque não tenho material."
+
+Esse é o ciclo que mata carreiras promissoras na HOF.
+
+A saída não é dinheiro, é MÉTODO de venda e planejamento.
+
+Quebre esse ciclo hoje. Me segue aqui.` },
+      ]
+    },
+  ],
+  6: [
+    {
+      id:'d6t1', type:'reels',
+      title:'Roteiro 5: 9 Mentiras sobre o High Ticket',
+      hint:'Reels · Com número no título',
+      sections:[
+        { label:'📹 Direção de vídeo', text:'Você reagindo a frases (pode usar o efeito de apontar para textos que aparecem na tela).' },
+        { label:'🎬 Título', text:'9 mentiras que te contaram sobre cobrar caro na Harmonização Facial.' },
+        { label:'📝 Legenda', text:'O mercado de "clínicas de seringa" quer que você acredite que o segredo é o volume de vendas. Eles estão mentindo.' },
+        { label:'🔢 9 Mentiras', slides:[
+          '1️⃣ "Minha cidade é pequena, ninguém paga": Pessoas viajam para buscar os melhores. Você só não é a melhor ainda.',
+          '2️⃣ "Preciso de um equipamento de 1 milhão": O maior ativo do High Ticket é o seu olho clínico e sua mão.',
+          '3️⃣ "Tenho que ter 100k seguidores": Autoridade se constrói no 1 a 1 e na entrega de resultados naturais.',
+          '4️⃣ "Cobrar caro é ser ganancioso": Cobrar o justo permite que você invista na segurança da sua paciente.',
+          '5️⃣ "O paciente só quer saber de ML": Ele só foca no ML porque você não soube explicar o Plano 3D.',
+          '6️⃣ "Preenchimento de nariz é perigoso demais": É perigoso para quem não domina a anatomia.',
+          '7️⃣ "Resultados de impacto exigem muitas seringas": Exigem as seringas CERTAS nos lugares CERTOS.',
+          '8️⃣ "O mercado está saturado": Está saturado de amadores, mas faminto por especialistas.',
+          '9️⃣ "Você precisa ser velha de mercado": Autoridade vem de conhecimento, não de idade.',
+        ]},
+        { label:'📣 CTA', text:'Não aceite o básico. Me siga para aprender como migrar para o High Ticket com segurança!' },
+      ]
+    },
+    {
+      id:'d6t2', type:'caixinha',
+      title:'Caixinha 10: Insegurança Técnica no Full Face',
+      hint:'Stories · Caixinha de perguntas',
+      sections:[
+        { label:'❓ Pergunta do seguidor', text:'"Tenho medo de oferecer o rosto todo e o paciente achar que estou querendo \'empurrar\' produto."' },
+        { label:'💬 Resposta sugerida', text:`Se você sente que está "empurrando", é porque você não acredita no que faz. Quando você entende que o Full Face é a única forma de devolver a dignidade e a autoestima daquela paciente de forma natural, você não "vende", você oferece uma solução necessária.
+
+O medo de ser julgada como "vendedora de tapete" é o que te mantém na mediocridade financeira. O profissional High Ticket é um consultor de beleza, não um tirador de pedidos.
+
+Aprenda a planejar em 3D e o paciente vai te agradecer por você ter tido a visão que ele não teve. O silêncio sobre o que o paciente precisa é uma negligência sua. Vai continuar com medo de vender?` },
+        { label:'📣 CTA', text:'Chamar para o link da bio.' },
+      ]
+    },
+    {
+      id:'d6t3', type:'carrossel',
+      title:'Carrossel 5: Trabalhando muito e ganhando pouco?',
+      hint:'Feed · Carrossel 6 slides',
+      sections:[
+        { label:'🖼️ Slides', slides:[
+          'CAPA: "Trabalhando muito e ganhando pouco? O problema pode ser sua tabela de preços."',
+          'Slide 2: Ter a agenda lotada de "procedimentos baratos" (só botox) é o caminho mais rápido para o burnout.',
+          'Slide 3: O lucro real está no High Ticket. Atender 2 pacientes por R$ 10k é melhor que 15 por R$ 1k.',
+          'Slide 4: Para isso, você precisa sair do "protocolo engessado" e entregar o efeito 3D que as clínicas populares não fazem.',
+          'Slide 5: Valorize sua arte, não apenas sua hora de cadeira.',
+          'Slide 6 (CTA): Qual o seu objetivo hoje: mais pacientes ou pacientes que pagam melhor? Comenta abaixo.',
+        ]},
+      ]
+    },
+  ],
+  7: [
+    {
+      id:'d7t1', type:'destaque',
+      title:'📌 Destaque: "Minha História"',
+      hint:'Stories · Destaque do Instagram',
+      sections:[
+        { label:'📋 Roteiro dos stories', slides:[
+          'Story 1 (Origem): Foto sua na formatura ou no início da carreira. "Minha jornada começou em 2014. Poucos sabem, mas comecei no SUS, atendendo uma realidade muito diferente da que vivo hoje."',
+          'Story 2 (O Desafio): Foto da sua primeira clínica ou de um momento de dúvida. "Em 2019 mudei para Uberlândia. O frio na barriga era enorme. Eu precisava fazer dar certo em um mercado extremamente competitivo."',
+          'Story 3 (Ponto de Virada): Foto com seu marido/família. "Com o apoio de quem acreditava em mim, comecei a transformar minha prática clínica em ensino. O que era um medo, virou minha maior paixão: mentorar outros profissionais."',
+          'Story 4 (Conquista): Foto/Vídeo com seus alunos. "Ver a vida de centenas de alunos mudar através do meu método é o que me faz levantar todos os dias."',
+          'Story 5 (Valores): Foto sua atendendo com foco nos detalhes. "Para mim, harmonização não é sobre inflar rostos, é sobre devolver a autoestima com sofisticação e segurança técnica."',
+          'Story 6 (Motivação Atual): Foto sorrindo no consultório. "Hoje, minha missão é elevar o nível da harmonização no Brasil, formando injetores que são verdadeiros artistas do Full Face."',
+        ]},
+        { label:'💡 Dica', text:'Organize esses stories no Destaque "Minha História" do seu perfil. Ideal para novos seguidores que chegam pelo Reels.' },
+      ]
+    },
+    {
+      id:'d7t2', type:'estatico',
+      title:'Estático 6: Planejamento 3D',
+      hint:'Feed · Post estático',
+      sections:[
+        { label:'📝 Texto completo', text:`O rosto não é um mapa de pontos fixos. É um jogo de luz e sombra.
+
+Quem aplica "receita de bolo" entrega resultados artificiais e pesados.
+
+O futuro da estética avançada é o 3D: naturalidade acima de tudo.` },
+        { label:'📣 CTA', text:'Você já trabalha com visão 3D? Diz aí nos comentários.' },
+      ]
+    },
+    {
+      id:'d7t3', type:'reels',
+      title:'Roteiro 7: 7 Atitudes de Autoridade',
+      hint:'Reels · Com número no título',
+      sections:[
+        { label:'📹 Direção de vídeo', text:'Você em uma postura de autoridade, talvez atendendo ou explicando algo com confiança.' },
+        { label:'🎬 Título', text:'7 atitudes que transformam um injetor comum em uma autoridade em Harmonização 3D.' },
+        { label:'📝 Legenda', text:'O que separa o profissional que ganha R$ 5k daquele que fatura R$ 50k não é a marca do preenchedor, é a postura e o método.' },
+        { label:'🔢 7 Atitudes', slides:[
+          '1️⃣ Parar de vender "procedimento" e começar a vender "transformação".',
+          '2️⃣ Dominar a anatomia a ponto de prever intercorrências antes que aconteçam.',
+          '3️⃣ Olhar para o rosto como uma escultura: entender onde falta suporte ósseo e onde sobra gordura.',
+          '4️⃣ Dizer "não" para protocolos prontos e "sim" para o planejamento individualizado.',
+          '5️⃣ Investir no seu conhecimento antes mesmo de ter o dinheiro sobrando (isso é visão!).',
+          '6️⃣ Ter clareza na comunicação: explicar o conceito 3D de forma que a paciente deseje o tratamento completo.',
+          '7️⃣ Manter a calma e o domínio técnico em qualquer situação clínica.',
+        ]},
+        { label:'📣 CTA', text:'Você está pronta para ser a maior autoridade da sua região? Me siga e vamos construir esse legado.' },
+      ]
+    },
+  ],
+};
+
+// ============================================================
+// CRONOGRAMA 2 — Dias 8 a 22 (início: 22/mai/2026)
+// ============================================================
+const TASKS2 = {
+  8:[
+    {id:'c2d8t1',type:'caixinha',title:'Caixinha 8: Quanto tempo leva migrar para o High Ticket?',hint:'Stories · Caixinha de perguntas',sections:[
+      {label:'❓ Pergunta do seguidor',text:'"Quanto tempo leva para migrar do básico para o High Ticket de verdade?"'},
+      {label:'💬 Resposta sugerida',text:'Depende de uma variável só: a velocidade com que você muda a sua mentalidade de "aplicadora de produto" para "consultora de resultados". Tecnicamente, com o método certo, de 3 a 6 meses são suficientes para transformar o seu posicionamento. O que demora mais é desaprender os vícios do protocolo engessado e aprender a vender resultado em vez de seringa.'},
+      {label:'📣 Legenda (Reels)',text:'A transição para o High Ticket não é um salto, é uma escolha refeita a cada atendimento. Qual é o maior obstáculo que você sente nessa jornada hoje? Comente abaixo.'},
+    ]},
+    {id:'c2d8t2',type:'reels',title:'3 Alguma Coisa 4: 3 armadilhas do marketing que destroem reputação',hint:'Reels · 3 alguma coisa',sections:[
+      {label:'🎬 Título',text:'3 armadilhas do marketing de estética que vendem imagem mas destroem reputação técnica'},
+      {label:'🔢 3 Armadilhas',slides:['Armadilha 1: Postar apenas resultados extremos para viralizar. Você atrai o paciente errado que quer o exagero e afasta o paciente de elite que busca naturalidade.','Armadilha 2: Usar filtros nas fotos de resultado. Quando a paciente vê o resultado real e compara com o post editado, a credibilidade some instantaneamente.','Armadilha 3: Postar somente procedimentos fáceis para não errar publicamente. O público técnico que tem o perfil de alto ticket quer ver que você domina casos complexos.']},
+      {label:'📣 CTA',text:'Compartilhe esse vídeo com um colega que ainda cai nessas armadilhas! 🔄'},
+    ]},
+    {id:'c2d8t3',type:'carrossel',title:'Carrossel 4: Paciente que questiona preço não é seu público ideal',hint:'Feed · Carrossel 5 slides',sections:[
+      {label:'🖼️ Slides',slides:['Capa: "Por que o paciente que questiona preço não é seu público ideal 💸🚫"','Slide 2 – O perfil do paciente de preço: Ele compara, negocia e, se fechar, vai embora sem indicar. O custo de atendê-lo é alto e o retorno é baixo.','Slide 3 – O que esse paciente revela sobre você: Se ele chegou, é porque o seu posicionamento ainda não está comunicando alto valor de forma clara.','Slide 4 – O que fazer com ele: Não dê desconto. Explique o diagnóstico completo. Se ele não perceber o valor, indique uma alternativa mais acessível sem vergonha.','Slide 5 – Como atrair o paciente certo: Conteúdo de diagnóstico, processo e raciocínio clínico atrai quem valoriza expertise. Conteúdo de promoção atrai quem valoriza preço.']},
+      {label:'📝 Legenda',text:'Você não precisa atender todo mundo. Você precisa atender quem entende o valor do que você faz.'},
+      {label:'📣 CTA',text:'Siga o perfil e aprenda a se posicionar para o paciente certo. 🚀'},
+    ]},
+  ],
+  9:[
+    {id:'c2d9t1',type:'caixinha',title:'Caixinha 9: Entrego resultados bons, mas paciente não indica',hint:'Stories · Caixinha de perguntas',sections:[
+      {label:'❓ Pergunta do seguidor',text:'"Sinto que entrego resultados bons, mas minha paciente não indica. Onde estou falhando?"'},
+      {label:'💬 Resposta sugerida',text:'Você está falhando no pós-procedimento. Resultado bom é o mínimo esperado; o que gera indicação espontânea é a experiência que vai além da seringa: o acompanhamento ativo, o interesse genuíno pelo resultado, a sensação de que ela foi tratada como indivíduo único, não como mais uma paciente. O High Ticket se paga com a seringa, mas se renova pelo relacionamento.'},
+      {label:'📣 Legenda (Reels)',text:'A sua paciente vai indicar você quando sentir que você se importou com ela depois que o dinheiro já foi pago. Como é o seu processo de pós-procedimento hoje? Comente aqui.'},
+    ]},
+    {id:'c2d9t2',type:'reels',title:'Leia a Legenda 5: 10 Indicadores Que Você Está Pronta',hint:'Reels · Leia a legenda',sections:[
+      {label:'🎬 Título',text:'10 Indicadores de Que Você Está Pronta Para Atender High Ticket'},
+      {label:'🔢 10 Indicadores',slides:['1️⃣ Você consegue justificar cada ponto de aplicação antes de tocar no rosto','2️⃣ Você já sabe identificar vasos de risco sem precisar consultar o caderno do curso','3️⃣ Você tem protocolo de emergência claro e produto para reversão no consultório','4️⃣ Você consegue fazer diagnóstico 3D completo em menos de 15 minutos de consulta','5️⃣ Você sente diferença entre o que a paciente pede e o que o rosto dela precisa','6️⃣ Você já disse não para um procedimento por questão técnica ou ética','7️⃣ Você tem pelo menos um case de resultado natural que gerou indicação espontânea','8️⃣ Você não sente vergonha de mostrar o seu processo de diagnóstico nas redes','9️⃣ Você sabe explicar o conceito 3D em linguagem acessível para a sua paciente','🔟 Você já atendeu uma paciente que começou perguntando o preço e terminou agradecendo pelo diagnóstico']},
+      {label:'📣 CTA',text:'🚀 Contou mais de 7? Você está mais do que pronta. Me chama no Direct! 📲'},
+    ]},
+    {id:'c2d9t3',type:'estatico',title:'Estático 4: Paciente que volta em 30 dias = High Ticket de verdade',hint:'Feed · Post estático',sections:[
+      {label:'📝 Texto do post',text:'"Quando a paciente volta em 30 dias para mostrar como o resultado amadureceu, sem você ter pedido, sem promoção, sem retargeting, você fez High Ticket de verdade. O retorno espontâneo é a única métrica que não mente."'},
+      {label:'📝 Legenda',text:'Fidelização não é sobre desconto de retorno. É sobre resultado que transforma e relacionamento que acolhe.'},
+      {label:'📣 CTA',text:'Comente aqui se você já viveu esse momento. 👇'},
+    ]},
+  ],
+  10:[
+    {id:'c2d10t1',type:'caixinha',title:'Caixinha 10: Como monto pacote Full Face sem parecer que empacoto produto?',hint:'Stories · Caixinha de perguntas',sections:[
+      {label:'❓ Pergunta do seguidor',text:'"Como monto o valor do meu pacote Full Face sem parecer que estou empacotando produto?"'},
+      {label:'💬 Resposta sugerida',text:'Você monta o pacote a partir do diagnóstico, nunca do estoque. Primeiro mostre o que o rosto precisa em termos de resultado esperado, depois explique quais produtos serão necessários para chegar lá. Quando o valor aparece como consequência do diagnóstico e não como lista de materiais, a paciente entende que está comprando transformação. O pacote se justifica sozinho.'},
+      {label:'📣 Legenda (Reels)',text:'Vender Full Face é vender uma visão de futuro para o rosto da sua paciente, não uma nota fiscal de produtos. Como você apresenta seu planejamento hoje? Conta aqui.'},
+    ]},
+    {id:'c2d10t2',type:'reels',title:'3 Alguma Coisa 5: 3 perguntas de diagnóstico que viram venda High Ticket',hint:'Reels · 3 alguma coisa',sections:[
+      {label:'🎬 Título',text:'3 perguntas de diagnóstico que transformam uma consulta comum em uma venda de alto valor'},
+      {label:'🔢 3 Perguntas',slides:['Pergunta 1: "O que incomoda mais você quando você olha no espelho com iluminação direta?" — essa pergunta ativa a dor real e coloca o paciente no papel de colaborador do diagnóstico.','Pergunta 2: "Em qual foto sua você se sente mais você?" — essa pergunta revela a referência emocional dele e orienta o planejamento para além do técnico.','Pergunta 3: "Se eu pudesse transformar apenas uma coisa no seu rosto hoje, qual você escolheria?" — essa pergunta revela prioridade e abre caminho para você apresentar o planejamento completo como solução mais inteligente.']},
+      {label:'📣 CTA',text:'Salve esse conteúdo para usar na sua próxima consulta! 🚀'},
+    ]},
+    {id:'c2d10t3',type:'carrossel',title:'Carrossel 5: Mapa de intercorrências',hint:'Feed · Carrossel 5 slides',sections:[
+      {label:'🖼️ Slides',slides:['Capa: "Mapa de intercorrências: aja rápido e mantenha a confiança da sua paciente ⚠️🩺"','Slide 2 – O erro mais grave: Perder a compostura na frente da paciente. O pânico do profissional amplifica o medo dela e compromete o manejo.','Slide 3 – Protocolo de oclusão vascular: reconheça os sinais precocemente — palidez, livedo, dor desproporcional — e tenha hialuronidase disponível imediatamente.','Slide 4 – Protocolo de hematoma e edema: saiba distinguir o normal do patológico e tenha orientações de pós-procedimento padronizadas.','Slide 5 – O diferencial do profissional preparado: Quem tem protocolo age com clareza. E clareza gera confiança, mesmo em situações adversas.']},
+      {label:'📝 Legenda',text:'A intercorrência não é o fim da confiança da paciente — a falta de preparo é. Tenha o seu protocolo de emergência dominado.'},
+      {label:'📣 CTA',text:'Comente aqui se você tem protocolo de emergência estruturado no seu consultório. 👇'},
+    ]},
+  ],
+  11:[
+    {id:'c2d11t1',type:'caixinha',title:'Caixinha 11: 5 anos de experiência e ainda cobro barato',hint:'Stories · Caixinha de perguntas',sections:[
+      {label:'❓ Pergunta do seguidor',text:'"Tenho mais de 5 anos de experiência mas ainda cobro barato. Como quebro esse padrão mental?"'},
+      {label:'💬 Resposta sugerida',text:'O problema não é o quanto você cobra, é o quanto você acredita que merece cobrar. Após 5 anos, você tem experiência suficiente para ser a maior referência da sua cidade, mas se o seu posicionamento continua o mesmo do primeiro ano, o mercado trata você como iniciante. Reposicione o seu perfil, atualize o seu discurso e aumente o preço. O mercado vai se ajustar, os pacientes certos vão ficar e os errados vão embora.'},
+      {label:'📣 Legenda (Reels)',text:'Tempo de mercado não se traduz automaticamente em valor percebido. Posicionamento consciente sim. Você já aumentou seus preços e teve medo? Comente sua experiência.'},
+    ]},
+    {id:'c2d11t2',type:'reels',title:'Leia a Legenda 6: 8 Comportamentos do Paciente de Elite',hint:'Reels · Leia a legenda',sections:[
+      {label:'🎬 Título',text:'8 Comportamentos do Paciente de Elite Que Você Precisa Aprender a Identificar'},
+      {label:'🔢 8 Comportamentos',slides:['1️⃣ Ele chega com perguntas sobre o processo, não sobre o preço','2️⃣ Ele tem histórico de cuidados consistentes com a aparência','3️⃣ Ele demonstra desconforto com resultados de outros profissionais, mesmo sem falar mal','4️⃣ Ele pesquisou sobre você antes de agendar','5️⃣ Ele traz referências de resultados naturais, não exagerados','6️⃣ Ele pergunta sobre o planejamento completo e não sobre procedimentos isolados','7️⃣ Ele respeita o seu diagnóstico mesmo quando contraria o que ele imaginava','8️⃣ Ele valoriza a consulta antes mesmo de saber o valor do procedimento']},
+      {label:'📣 CTA',text:'💬 Você já atendeu um paciente assim e não soube cobrar o valor correto? Conta aqui embaixo! 👇'},
+    ]},
+    {id:'c2d11t3',type:'reels',title:'React 2: Profissional que se subestima e aceita qualquer preço',hint:'React/Remix · #medicinaestetica',sections:[
+      {label:'📋 Como fazer',text:'Buscar pela hashtag #medicinaestetica por Reels com mais de 100k views.\nEncontrar vídeos de profissionais confusos sobre precificação ou dando desconto por vergonha.\nClicar em "Remix" e gravar sua reação com posicionamento de autoridade.'},
+      {label:'🔍 Palavras-chave de busca',text:'"quanto cobrar harmonização", "medo de cobrar caro", "tabela de preços estetica"'},
+      {label:'💡 Foco do react',text:'Vídeos de profissionais confusos sobre precificação ou dando desconto por vergonha.'},
+    ]},
+  ],
+  12:[
+    {id:'c2d12t1',type:'caixinha',title:'Caixinha 12: Agenda vazia nas segundas. Como atraio orgânico?',hint:'Stories · Caixinha de perguntas',sections:[
+      {label:'❓ Pergunta do seguidor',text:'"Minha agenda está sempre vazia nas segundas. Como atraio paciente orgânico sem anúncio pago?"'},
+      {label:'💬 Resposta sugerida',text:'Paciente orgânico vem de consistência de conteúdo e clareza de posicionamento, não de sorte. Se a segunda-feira está vazia, é porque o conteúdo que você produziu na semana passada não criou desejo de agendamento. Mostre o processo, não só o resultado. Mostre diagnóstico, raciocínio, detalhes técnicos que impressionam sem revelar tudo. Curiosidade qualificada gera agendamento orgânico.'},
+      {label:'📣 Legenda (Reels)',text:'O melhor anúncio para um injetor de elite é o conteúdo educativo que mostra que você pensa diferente. Qual tipo de post traz mais agendamentos para você? Me conta aqui.'},
+    ]},
+    {id:'c2d12t2',type:'reels',title:'3 Alguma Coisa 6: 3 elementos do pós-procedimento que transformam em fã',hint:'Reels · 3 alguma coisa',sections:[
+      {label:'🎬 Título',text:'3 elementos de um pós-procedimento que transformam paciente em fã e fonte de indicação'},
+      {label:'🔢 3 Elementos',slides:['Elemento 1: Mensagem personalizada 48 horas após o procedimento perguntando sobre o inchaço e o conforto. Não é follow-up de rotina — é cuidado genuíno que a paciente vai contar para as amigas.','Elemento 2: Envio de guia de cuidados pós-procedimento exclusivo com a identidade visual da sua clínica. Isso mostra profissionalismo e mantém o seu nome presente no dia a dia dela.','Elemento 3: Consulta de revisão gratuita de 15 a 21 dias para avaliar o resultado consolidado. Esse momento é a oportunidade mais poderosa para fechar o próximo planejamento.']},
+      {label:'📣 CTA',text:'Deixa aqui nos comentários como é o seu pós-procedimento hoje! 👇'},
+    ]},
+    {id:'c2d12t3',type:'estatico',title:'Estático 5: Mostrar processo vale mais que antes e depois',hint:'Feed · Post estático',sections:[
+      {label:'📝 Texto do post',text:'"Mostrar o processo de planejamento vale mais do que o antes e depois. O resultado convence quem já ia comprar. O diagnóstico convence quem ainda duvidava. O paciente de elite quer saber que você pensa antes de injetar."'},
+      {label:'📝 Legenda',text:'O seu conteúdo de mais alto valor não é o resultado deslumbrante, é o raciocínio clínico que levou até ele.'},
+      {label:'📣 CTA',text:'Siga o perfil para aprender a criar conteúdo de autoridade técnica. 🚀'},
+    ]},
+  ],
+  13:[
+    {id:'c2d13t1',type:'caixinha',title:'Caixinha 13: Como introduzo 3D com paciente que teve resultado ruim?',hint:'Stories · Caixinha de perguntas',sections:[
+      {label:'❓ Pergunta do seguidor',text:'"Como introduzo o conceito 3D em uma consulta de paciente que já teve resultado ruim com outra profissional?"'},
+      {label:'💬 Resposta sugerida',text:'Com escuta ativa antes de qualquer diagnóstico. Ela chegou traumatizada, então a sua primeira entrega é confiança, não técnica. Ouça o que aconteceu, valide o que ela sentiu sem atacar quem fez antes e, só depois, apresente o seu olhar diferenciado sobre o rosto dela. Quando ela sente que você a enxerga como pessoa e não como caso técnico, a barreira de desconfiança cai e o planejamento 3D se torna possível.'},
+      {label:'📣 Legenda (Reels)',text:'Resgatar a confiança de uma paciente com experiência ruim é um dos maiores testes de autoridade para um injetor. Você já viveu essa situação? Comente abaixo.'},
+    ]},
+    {id:'c2d13t2',type:'reels',title:'Leia a Legenda 7: 9 Passos Para Construir Autoridade Regional',hint:'Reels · Leia a legenda',sections:[
+      {label:'🎬 Título',text:'9 Passos Para Construir Autoridade Regional Sem Precisar de Viral'},
+      {label:'🔢 9 Passos',slides:['1️⃣ Definir um posicionamento claro de especialidade — não seja "injetora de tudo"','2️⃣ Mostrar raciocínio clínico no conteúdo, não só resultado final','3️⃣ Documentar o processo diagnóstico (respeitando privacidade da paciente)','4️⃣ Criar conteúdo educativo que o paciente típico nunca viu antes','5️⃣ Responder comentários e DMs com profundidade técnica','6️⃣ Aparecer em eventos e cursos presencialmente — network é autoridade offline','7️⃣ Colher depoimentos de pacientes satisfeitas de forma sistemática','8️⃣ Mostrar os seus estudos e atualizações continuamente','9️⃣ Manter consistência de publicação por no mínimo 90 dias sem esperar retorno']},
+      {label:'📣 CTA',text:'📩 Qual desses passos você mais precisa aplicar agora? Me conta no Direct! 🤝'},
+    ]},
+    {id:'c2d13t3',type:'carrossel',title:'Carrossel 6: Como educar paciente sobre planejamento 3D em uma consulta',hint:'Feed · Carrossel 5 slides',sections:[
+      {label:'🖼️ Slides',slides:['Capa: "Como educar o paciente sobre o valor do planejamento 3D em uma única consulta 🎓💎"','Slide 2 – Comece com perguntas, não com respostas: Deixe o paciente revelar as próprias insatisfações antes de você apresentar o diagnóstico.','Slide 3 – Use a câmera como aliada: Mostre para ele os ângulos que ele nunca observou. Visibilizar o problema é o primeiro passo para ele entender o valor da solução.','Slide 4 – Fale sobre resultado, não sobre produto: "Vamos devolver a projeção do terço médio para equilibrar o contorno" comunica muito mais valor do que "vou colocar 1ml de preenchedor no malar".','Slide 5 – Feche com visão de futuro: Mostre como o planejamento hoje previne o uso excessivo de produto nos próximos anos. Isso posiciona você como consultora de longo prazo.']},
+      {label:'📝 Legenda',text:'Uma consulta de diagnóstico bem conduzida vale mais do que qualquer post ou anúncio pago.'},
+      {label:'📣 CTA',text:'Envie uma mensagem no Direct e vamos trabalhar juntos o seu script de consulta. 📩'},
+    ]},
+  ],
+  14:[
+    {id:'c2d14t1',type:'caixinha',title:'Caixinha 14: Trabalho em espaço alugado. Como transmito autoridade?',hint:'Stories · Caixinha de perguntas',sections:[
+      {label:'❓ Pergunta do seguidor',text:'"Trabalho em espaço alugado e não consigo criar ambiente de luxo. Como transmito autoridade mesmo assim?"'},
+      {label:'💬 Resposta sugerida',text:'Luxo em harmonização não mora nas paredes, mora na experiência. Uma sala simples com iluminação correta, atendimento impecável, materiais organizados e uma apresentação de diagnóstico detalhada comunica mais sofisticação do que uma clínica cara com profissional genérico. O paciente de alto ticket investe em quem ele confia, não em quem tem o espaço mais bonito.'},
+      {label:'📣 Legenda (Reels)',text:'A autoridade mais sólida se constrói no detalhe do atendimento, não no tamanho do consultório. Onde você atende hoje? Comente aqui.'},
+    ]},
+    {id:'c2d14t2',type:'reels',title:'3 Alguma Coisa 7: 3 formas de usar Instagram sem dança ou trend',hint:'Reels · 3 alguma coisa',sections:[
+      {label:'🎬 Título',text:'3 formas de usar o Instagram para atrair paciente de alto ticket sem depender de dança ou trend'},
+      {label:'🔢 3 Formas',slides:['Forma 1: Educar sobre diagnóstico facial em vídeos curtos. Quando você explica como avalia um rosto, o paciente qualificado entende que você pensa diferente e quer ser atendido por você.','Forma 2: Mostrar os bastidores do seu processo de planejamento. A transparência técnica constrói confiança antes mesmo da consulta e elimina a objeção de preço.','Forma 3: Responder objeções comuns em formato de Reels. "Minha cidade não tem paciente para High Ticket" e "Tenho medo de cobrar mais" são conteúdos que atraem exatamente o paciente que entendeu o valor do que você oferece.']},
+      {label:'📣 CTA',text:'Me segue para mais estratégias de posicionamento na HOF! 🚀'},
+    ]},
+    {id:'c2d14t3',type:'estatico',title:'Estático 6: Quem estuda anatomia domina o mercado',hint:'Feed · Post estático',sections:[
+      {label:'📝 Texto do post',text:'"Quem estuda anatomia enquanto os outros dormem, domina o mercado enquanto os outros reclamam que está saturado. O mercado não está saturado de especialistas reais. Está saturado de injetores sem base anatômica disputando o mesmo paciente de R$ 800."'},
+      {label:'📝 Legenda',text:'A escassez de referências técnicas reais é a sua maior oportunidade de crescimento agora.'},
+      {label:'📣 CTA',text:'Compartilhe com quem precisa ouvir isso. 🔄'},
+    ]},
+  ],
+  15:[
+    {id:'c2d15t1',type:'caixinha',title:'Caixinha 15: Tenho medo de começar 3D, acho que não sou boa o suficiente',hint:'Stories · Caixinha de perguntas',sections:[
+      {label:'❓ Pergunta do seguidor',text:'"Tenho medo de começar preenchimento 3D porque acho que ainda não sou boa o suficiente."'},
+      {label:'💬 Resposta sugerida',text:'Você nunca vai se sentir "boa o suficiente" se esperar o momento perfeito — isso é a síndrome do impostor falando mais alto do que os seus resultados. Você não precisa saber tudo para mentorar; precisa saber mais do que quem está começando e ter clareza de método. Os seus erros e aprendizados valem tanto quanto os seus acertos. O mercado precisa de mentoras reais, não de perfeitas.'},
+      {label:'📣 Legenda (Reels)',text:'O maior freio para quem tem capacidade de ensinar é a voz que diz "espera mais um pouco". Você pensa em mentorar algum dia? Comente aqui.'},
+    ]},
+    {id:'c2d15t2',type:'carrossel',title:'Carrossel 7: Do medo ao domínio — caminho para referência em Full Face 3D',hint:'Feed · Carrossel 5 slides',sections:[
+      {label:'🖼️ Slides',slides:['Capa: "Do medo ao domínio: o caminho real para ser referência em Full Face 3D 🏆🗺"','Slide 2 – Fase 1 (Medo técnico): Você sabe fazer procedimentos isolados mas trava no planejamento completo. Solução: domínio do raciocínio diagnóstico antes da técnica.','Slide 3 – Fase 2 (Insegurança de venda): Você tem a técnica mas não sabe apresentar o valor. Solução: script de consulta estruturado e clareza sobre o que você está vendendo.','Slide 4 – Fase 3 (Bloqueio de preço): Você sabe fazer e sabe vender, mas cobra barato por crença limitante. Solução: reposicionamento de marca e narrativa de autoridade.','Slide 5 – Fase 4 (Referência regional): A agenda se enche de indicações e o paciente chega perguntando quando tem horário, não quanto custa.']},
+      {label:'📝 Legenda',text:'Cada profissional de referência passou por essas fases. A diferença está em quanto tempo você fica em cada uma.'},
+      {label:'📣 CTA',text:'Em qual fase você está hoje? Me conta nos comentários. 👇'},
+    ]},
+    {id:'c2d15t3',type:'estatico',title:'Estático 7: A diferença entre R$800 e R$15.000 é o raciocínio clínico',hint:'Feed · Post estático',sections:[
+      {label:'📝 Texto do post',text:'"A diferença entre quem cobra R$ 800 e quem cobra R$ 15.000 não está na seringa que usa nem na clínica onde atende. Está no raciocínio clínico que demonstra antes do procedimento e na clareza com que comunica o valor desse raciocínio para a paciente."'},
+      {label:'📝 Legenda',text:'Você está cobrando pelo produto ou pelo diagnóstico que ninguém mais sabe fazer? Essa resposta define o seu teto de faturamento.'},
+      {label:'📣 CTA',text:'Me chame no Direct se quiser descobrir qual é o seu teto atual e como quebrá-lo. 📩'},
+    ]},
+  ],
+};
+
+// ============================================================
+// ESTADO
+// ============================================================
+const START = new Date(2026,4,15);
+function dayNum(date){ const a=new Date(START.getFullYear(),START.getMonth(),START.getDate()); const b=new Date(date.getFullYear(),date.getMonth(),date.getDate()); return Math.round((b-a)/86400000)+1; }
+function dateOf(d){ const dt=new Date(START); dt.setDate(dt.getDate()+(d-1)); return dt; }
+function tasksFor(d){
+  if(d>=1&&d<=7)  return TASKS[d]||[];
+  if(d>=8&&d<=22) return TASKS2[d]||[];
+  // após dia 22: repete C2 ciclicamente (dias 8-22 = 15 dias)
+  return TASKS2[((d-8)%15)+8]||[];
+}
+
+let currentDay = Math.max(1, dayNum(new Date()));
+let modalKey = null;
+
+const SK='annyhof_final';
+function load(){ try{ return JSON.parse(localStorage.getItem(SK)||'{}'); }catch{ return {}; } }
+function save(s){ try{ localStorage.setItem(SK,JSON.stringify(s)); }catch(e){ console.warn(e); } }
+function stateKey(day,id){ return `${day}_${id}`; }
+
+function carried(){
+  const s=load(); const out=[];
+  for(let d=1;d<currentDay;d++){
+    tasksFor(d).forEach(t=>{ if(!s[stateKey(d,t.id)]) out.push({...t,_origDay:d,_key:stateKey(d,t.id)}); });
+  }
+  return out;
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+const typeClass={'reels':'t-reels','carrossel':'t-carrossel','estatico':'t-estatico','caixinha':'t-caixinha','destaque':'t-destaque','react':'t-reels'};
+const typeLabel={'reels':'Reels','carrossel':'Carrossel','estatico':'Estático','caixinha':'Caixinha','destaque':'Destaque','react':'React/Remix'};
+
+function render(){
+  renderHeader();
+  renderMiniCal();
+  renderTasks();
+}
+
+function renderHeader(){
+  const d=dateOf(currentDay);
+  document.getElementById('dayPill').textContent=`Dia ${currentDay}`;
+  document.getElementById('dateNum').textContent=d.getDate();
+  document.getElementById('dateWd').textContent=d.toLocaleDateString('pt-BR',{weekday:'long'});
+  document.getElementById('dateMo').textContent=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+}
+
+function renderMiniCal(){
+  const cal=document.getElementById('miniCal'); cal.innerHTML='';
+  const s=load();
+  const start=Math.max(1,currentDay-3);
+  for(let d=start;d<=currentDay+5;d++){
+    const dt=dateOf(d);
+    const tasks=tasksFor(d);
+    const done=tasks.filter(t=>!!s[stateKey(d,t.id)]).length;
+    const el=document.createElement('div');
+    el.className='cal-pill'+(d===currentDay?' active':'');
+    el.onclick=()=>{ currentDay=d; render(); window.scrollTo({top:0,behavior:'smooth'}); };
+    el.innerHTML=`<div class="wd">${dt.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.','')}</div><div class="dn">${dt.getDate()}</div><div class="dots">${tasks.map((_,i)=>`<div class="dot${i<done?' done':''}"></div>`).join('')}</div>`;
+    cal.appendChild(el);
+  }
+  setTimeout(()=>{ const a=cal.querySelector('.active'); if(a) a.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'}); },80);
+}
+
+function renderTasks(){
+  const s=load();
+  const carr=carried();
+  const tasks=tasksFor(currentDay);
+  const all=[...carr,...tasks];
+
+  const accum=document.getElementById('accum');
+  if(carr.length){ accum.classList.add('on'); document.getElementById('accumMsg').textContent=`${carr.length} tarefa${carr.length>1?'s':''} acumulada${carr.length>1?'s':''} de dias anteriores`; }
+  else accum.classList.remove('on');
+
+  const list=document.getElementById('taskList'); list.innerHTML='';
+  let done=0;
+  all.forEach((task,i)=>{
+    const key=task._key||stateKey(currentDay,task.id);
+    const isDone=!!s[key];
+    if(isDone) done++;
+    const card=document.createElement('div');
+    card.className=`task-card${task._origDay?' carried':''}${isDone?' is-done':''}`;
+    card.style.animationDelay=`${i*0.055}s`;
+    card.onclick=()=>openModal(task,key);
+    card.innerHTML=`
+      <button class="check-btn${isDone?' on':''}" onclick="event.stopPropagation();toggle('${key}')">
+        <span class="check-icon">✓</span><span class="check-dot"></span>
+      </button>
+      <div class="task-body">
+        <span class="task-type ${typeClass[task.type]||''}">${typeLabel[task.type]||task.type}</span>
+        <div class="task-title">${task.title}</div>
+        <div class="task-hint">${task.hint||''}</div>
+        ${task._origDay?`<div class="carried-tag">🔴 Acumulado do Dia ${task._origDay}</div>`:''}
+      </div>
+      <div class="open-arrow">›</div>`;
+    list.appendChild(card);
+  });
+
+  const total=all.length;
+  const pct=total?Math.round((done/total)*100):0;
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progLabel').textContent=`${done} de ${total} tarefa${total!==1?'s':''}`;
+  document.getElementById('progPct').textContent=pct+'%';
+}
+
+// ============================================================
+// TOGGLE
+// ============================================================
+function toggle(key){
+  const s=load();
+  if(s[key]){ delete s[key]; } else { s[key]=Date.now(); notify('✅','Tarefa concluída!'); }
+  save(s); renderTasks();
+  // atualiza modal se aberto
+  if(modalKey===key){
+    const btn=document.getElementById('doneBtn');
+    const isDone=!!load()[key];
+    btn.textContent=isDone?'↩ Marcar como pendente':'✓ Marcar como feito';
+    btn.className='done-toggle-btn'+(isDone?' is-done':'');
+  }
+}
+
+function toggleFromModal(){ if(modalKey) toggle(modalKey); }
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(task,key){
+  modalKey=key;
+  const s=load(); const isDone=!!s[key];
+  const tc=typeClass[task.type]||'';
+  const tl=typeLabel[task.type]||task.type;
+
+  document.getElementById('mType').innerHTML=`<span class="task-type ${tc}">${tl}</span>`;
+  document.getElementById('mTitle').textContent=task.title;
+
+  const body=document.getElementById('mBody');
+  body.innerHTML='';
+  (task.sections||[]).forEach(sec=>{
+    const wrap=document.createElement('div');
+    wrap.className='sheet-section';
+    let html=`<div class="sheet-section-label">${sec.label}</div>`;
+    if(sec.slides){
+      sec.slides.forEach(slide=>{ html+=`<div class="sheet-slide">${slide}</div>`; });
+    } else {
+      html+=`<div class="sheet-text">${sec.text||''}</div>`;
+    }
+    wrap.innerHTML=html;
+    body.appendChild(wrap);
+  });
+
+  const btn=document.getElementById('doneBtn');
+  btn.textContent=isDone?'↩ Marcar como pendente':'✓ Marcar como feito';
+  btn.className='done-toggle-btn'+(isDone?' is-done':'');
+
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeSheet(){
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow='';
+  modalKey=null;
+}
+
+function closeModal(e){ if(e.target===document.getElementById('overlay')) closeSheet(); }
+
+// ============================================================
+// NAV & UTILS
+// ============================================================
+function navigate(delta){ const n=currentDay+delta; if(n<1) return; currentDay=n; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+function notify(icon,msg){
+  const el=document.getElementById('notif');
+  document.getElementById('notifIcon').textContent=icon;
+  document.getElementById('notifMsg').textContent=msg;
+  el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2400);
+}
+
+// INIT
+render();
+window.addEventListener('focus',()=>{
+  const c=carried();
+  if(c.length) notify('⚠️',`${c.length} tarefa${c.length>1?'s':''} pendente${c.length>1?'s':''} acumuladas`);
+});
+</script>
+</body>
+</html>
