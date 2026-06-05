@@ -224,6 +224,16 @@ body::before {
 .notif.show { transform:translateY(0); }
 
 @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ADD TASK MODAL */
+.type-opt {
+  font-size:9px; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
+  padding:6px 12px; border-radius:20px; border:1px solid transparent;
+  cursor:pointer; transition:all .2s; font-family:'DM Sans',sans-serif;
+}
+.type-opt.selected { outline:2px solid var(--accent); outline-offset:2px; }
+input::placeholder, textarea::placeholder { color:var(--muted); opacity:.6; }
+input:focus, textarea:focus { border-color:rgba(201,169,110,0.4) !important; }
 </style>
 </head>
 <body>
@@ -239,7 +249,7 @@ body::before {
   <div class="prog-wrap"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
   <div class="prog-row"><span id="progLabel">0 de 3 tarefas</span><span id="progPct">0%</span></div>
 </div>
-y
+
 <!-- CONTENT -->
 <div class="content">
   <div class="mini-cal" id="miniCal"></div>
@@ -258,11 +268,67 @@ y
 
   <div class="accum" id="accum"><span>🔴</span><span id="accumMsg"></span></div>
 
-  <div class="sec-label">Tarefas do dia</div>
+  <div class="sec-label" style="display:flex;align-items:center;justify-content:space-between;">
+    <span>Tarefas do dia</span>
+    <button onclick="openAddModal()" style="background:rgba(201,169,110,0.12);border:1px solid rgba(201,169,110,0.3);border-radius:20px;color:var(--accent);font-size:11px;font-weight:600;padding:4px 12px;cursor:pointer;letter-spacing:.08em;">+ Nova tarefa</button>
+  </div>
   <div id="taskList"></div>
 </div>
 
-<!-- MODAL -->
+<!-- MODAL ADICIONAR TAREFA -->
+<div class="overlay" id="addOverlay" onclick="closeAddModal(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div>
+        <div class="sheet-type" style="color:var(--accent);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;">Nova Tarefa</div>
+        <div class="sheet-title">Adicionar ao Dia <span id="addDayLabel"></span></div>
+      </div>
+      <button class="close-btn" onclick="closeAddSheet()">✕</button>
+    </div>
+    <div class="sheet-body">
+
+      <div style="margin-bottom:18px;">
+        <label style="font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:8px;">Tipo</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;" id="typeSelector">
+          <button onclick="selectType(this,'reels')"    class="type-opt t-reels">Reels</button>
+          <button onclick="selectType(this,'carrossel')" class="type-opt t-carrossel">Carrossel</button>
+          <button onclick="selectType(this,'estatico')"  class="type-opt t-estatico">Estático</button>
+          <button onclick="selectType(this,'caixinha')"  class="type-opt t-caixinha">Caixinha</button>
+          <button onclick="selectType(this,'destaque')"  class="type-opt t-destaque">Destaque</button>
+          <button onclick="selectType(this,'outro')"     class="type-opt" style="background:rgba(255,255,255,0.07);color:var(--muted);">Outro</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:18px;">
+        <label style="font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:8px;">Título da tarefa</label>
+        <input id="addTitle" type="text" placeholder="Ex: Reels sobre diagnóstico 3D"
+          style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;">
+      </div>
+
+      <div style="margin-bottom:18px;">
+        <label style="font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:8px;">Descrição / O que fazer</label>
+        <textarea id="addDesc" rows="5" placeholder="Descreva o que precisa fazer nessa tarefa..."
+          style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;resize:none;line-height:1.6;"></textarea>
+      </div>
+
+      <div>
+        <label style="font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:8px;">Adicionar ao dia</label>
+        <select id="addDaySelect"
+          style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;appearance:none;">
+        </select>
+      </div>
+
+    </div>
+    <div class="sheet-footer">
+      <button onclick="saveNewTask()" style="width:100%;padding:14px;border-radius:12px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;background:linear-gradient(135deg,rgba(201,169,110,0.2),rgba(201,169,110,0.08));border:1px solid var(--border);color:var(--accent);transition:all .2s;">
+        ✓ Salvar tarefa
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VER TAREFA -->
 <div class="overlay" id="overlay" onclick="closeModal(event)">
   <div class="sheet" id="sheet">
     <div class="sheet-handle"></div>
@@ -965,8 +1031,94 @@ function notify(icon,msg){
   el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2400);
 }
 
-// INIT
-render();
+// ============================================================
+// ADICIONAR TAREFA PERSONALIZADA
+// ============================================================
+let selectedType = 'outro';
+
+function openAddModal() {
+  // preenche o select de dias com os próximos 22 dias
+  const sel = document.getElementById('addDaySelect');
+  sel.innerHTML = '';
+  for (let d = 1; d <= 22; d++) {
+    const dt = dateOf(d);
+    const label = `Dia ${d} — ${dt.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short'})}`;
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = label;
+    if (d === currentDay) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  document.getElementById('addDayLabel').textContent = currentDay;
+  document.getElementById('addTitle').value = '';
+  document.getElementById('addDesc').value = '';
+  selectedType = 'outro';
+  document.querySelectorAll('.type-opt').forEach(b => b.classList.remove('selected'));
+  document.getElementById('addOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeAddSheet() {
+  document.getElementById('addOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function closeAddModal(e) {
+  if (e.target === document.getElementById('addOverlay')) closeAddSheet();
+}
+
+function selectType(btn, type) {
+  selectedType = type;
+  document.querySelectorAll('.type-opt').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function saveNewTask() {
+  const title = document.getElementById('addTitle').value.trim();
+  const desc  = document.getElementById('addDesc').value.trim();
+  const day   = parseInt(document.getElementById('addDaySelect').value);
+
+  if (!title) {
+    document.getElementById('addTitle').focus();
+    document.getElementById('addTitle').style.borderColor = 'rgba(212,117,154,0.6)';
+    setTimeout(() => document.getElementById('addTitle').style.borderColor = '', 1500);
+    return;
+  }
+
+  // Salva no localStorage como tarefa custom
+  const s = load();
+  const customs = s._customs || {};
+  if (!customs[day]) customs[day] = [];
+
+  const newTask = {
+    id: 'custom_' + Date.now(),
+    type: selectedType,
+    title: title,
+    hint: 'Tarefa personalizada',
+    sections: desc ? [{ label: '📝 Descrição', text: desc }] : [],
+  };
+
+  customs[day].push(newTask);
+  s._customs = customs;
+  save(s);
+
+  closeAddSheet();
+  notify('✨', 'Tarefa adicionada!');
+
+  // se estiver no dia certo, re-renderiza
+  if (day === currentDay) renderTasks();
+}
+
+// ============================================================
+// PATCH: injetar tarefas custom no render
+// ============================================================
+const _origTasksFor = tasksFor;
+function tasksFor(d) {
+  const base = _origTasksFor(d);
+  const s = load();
+  const customs = (s._customs || {})[d] || [];
+  return [...base, ...customs];
+}
 window.addEventListener('focus',()=>{
   const c=carried();
   if(c.length) notify('⚠️',`${c.length} tarefa${c.length>1?'s':''} pendente${c.length>1?'s':''} acumuladas`);
