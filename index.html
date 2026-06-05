@@ -248,6 +248,9 @@ input:focus, textarea:focus { border-color:rgba(201,169,110,0.4) !important; }
   </div>
   <div class="prog-wrap"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
   <div class="prog-row"><span id="progLabel">0 de 3 tarefas</span><span id="progPct">0%</span></div>
+  <button onclick="openImportModal()" style="margin-top:10px;width:100%;background:rgba(201,169,110,0.08);border:1px solid rgba(201,169,110,0.2);border-radius:10px;color:var(--accent);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;letter-spacing:.1em;padding:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+    📄 Importar cronograma com IA
+  </button>
 </div>
 
 <!-- CONTENT -->
@@ -1123,6 +1126,205 @@ window.addEventListener('focus',()=>{
   const c=carried();
   if(c.length) notify('⚠️',`${c.length} tarefa${c.length>1?'s':''} pendente${c.length>1?'s':''} acumuladas`);
 });
+</script>
+
+<!-- MODAL IMPORTAR CRONOGRAMA -->
+<div class="overlay" id="importOverlay" onclick="closeImportModal(event)">
+  <div class="sheet" style="max-height:95vh;">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div>
+        <div class="sheet-type" style="color:var(--accent);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;">Importar com IA</div>
+        <div class="sheet-title">Cole seu cronograma</div>
+      </div>
+      <button class="close-btn" onclick="closeImportSheet()">✕</button>
+    </div>
+    <div class="sheet-body">
+      <p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:16px;">
+        Cole abaixo o texto do seu cronograma (pode ser de um PDF, Word ou qualquer documento). A IA vai identificar os dias, tipos de conteúdo e descrições automaticamente.
+      </p>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:8px;">A partir do dia</label>
+        <select id="importStartDay" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;appearance:none;"></select>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:8px;">Texto do cronograma</label>
+        <textarea id="importText" rows="10" placeholder="Cole aqui o conteúdo do seu documento..."
+          style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;resize:none;line-height:1.6;"></textarea>
+      </div>
+
+      <div id="importResult" style="display:none;">
+        <div style="font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+          Prévia das tarefas identificadas
+          <span style="flex:1;height:1px;background:var(--border);display:block;"></span>
+        </div>
+        <div id="importPreview" style="max-height:240px;overflow-y:auto;"></div>
+      </div>
+
+      <div id="importLoading" style="display:none;text-align:center;padding:24px 0;">
+        <div style="font-size:28px;animation:spin 1s linear infinite;display:inline-block;">✦</div>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px;letter-spacing:.06em;">Analisando com IA...</p>
+      </div>
+
+    </div>
+    <div class="sheet-footer" style="display:flex;flex-direction:column;gap:10px;">
+      <button id="importAnalyzeBtn" onclick="analyzeWithAI()" style="width:100%;padding:14px;border-radius:12px;border:1px solid var(--border);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;background:linear-gradient(135deg,rgba(201,169,110,0.2),rgba(201,169,110,0.06));color:var(--accent);transition:all .2s;">
+        ✦ Analisar com IA
+      </button>
+      <button id="importSaveBtn" onclick="saveImported()" style="display:none;width:100%;padding:14px;border-radius:12px;border:1px solid rgba(123,200,123,0.3);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;background:var(--done-bg);color:var(--done-text);transition:all .2s;">
+        ✓ Salvar todas as tarefas
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+</style>
+
+<script>
+
+// ============================================================
+// IMPORTAR CRONOGRAMA COM IA
+// ============================================================
+let importedTasks = [];
+
+function openImportModal() {
+  const sel = document.getElementById('importStartDay');
+  sel.innerHTML = '';
+  for (let d = 1; d <= 60; d++) {
+    const dt = dateOf(d);
+    const label = `Dia ${d} — ${dt.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short'})}`;
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = label;
+    if (d === currentDay) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  document.getElementById('importText').value = '';
+  document.getElementById('importResult').style.display = 'none';
+  document.getElementById('importSaveBtn').style.display = 'none';
+  document.getElementById('importLoading').style.display = 'none';
+  document.getElementById('importAnalyzeBtn').style.display = 'block';
+  importedTasks = [];
+  document.getElementById('importOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImportSheet() {
+  document.getElementById('importOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function closeImportModal(e) {
+  if (e.target === document.getElementById('importOverlay')) closeImportSheet();
+}
+
+async function analyzeWithAI() {
+  const text = document.getElementById('importText').value.trim();
+  if (!text) {
+    document.getElementById('importText').style.borderColor = 'rgba(212,117,154,0.6)';
+    setTimeout(() => document.getElementById('importText').style.borderColor = '', 1500);
+    return;
+  }
+
+  const startDay = parseInt(document.getElementById('importStartDay').value);
+
+  document.getElementById('importLoading').style.display = 'block';
+  document.getElementById('importAnalyzeBtn').style.display = 'none';
+  document.getElementById('importResult').style.display = 'none';
+
+  const prompt = `Você é um assistente que organiza cronogramas de conteúdo para Instagram.
+
+Analise o texto abaixo e extraia todas as tarefas/conteúdos mencionados.
+Para cada tarefa, retorne um JSON com:
+- "dia_relativo": número do dia (1, 2, 3...) baseado na ordem que aparecem no texto
+- "tipo": um de: reels, carrossel, estatico, caixinha, destaque, outro
+- "titulo": título curto e direto da tarefa (máx 60 chars)
+- "descricao": descrição completa do que precisa ser feito
+
+Retorne APENAS um array JSON válido, sem texto extra, sem markdown, sem backticks.
+Exemplo: [{"dia_relativo":1,"tipo":"reels","titulo":"...","descricao":"..."}]
+
+TEXTO DO CRONOGRAMA:
+${text}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await resp.json();
+    const raw = data.content.map(i => i.text || '').join('').trim();
+
+    // Parse JSON — remove possíveis backticks residuais
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    importedTasks = parsed.map(t => ({
+      id: 'import_' + Date.now() + '_' + Math.random().toString(36).slice(2),
+      type: t.tipo || 'outro',
+      title: t.titulo || 'Tarefa importada',
+      hint: 'Importado via IA',
+      sections: t.descricao ? [{ label: '📝 Descrição', text: t.descricao }] : [],
+      _targetDay: startDay + (t.dia_relativo - 1),
+    }));
+
+    // Mostra prévia
+    const preview = document.getElementById('importPreview');
+    preview.innerHTML = '';
+    importedTasks.forEach(t => {
+      const tc = { reels:'t-reels', carrossel:'t-carrossel', estatico:'t-estatico', caixinha:'t-caixinha', destaque:'t-destaque', outro:'t-estatico' };
+      const tl = { reels:'Reels', carrossel:'Carrossel', estatico:'Estático', caixinha:'Caixinha', destaque:'Destaque', outro:'Outro' };
+      const el = document.createElement('div');
+      el.style.cssText = 'background:var(--card2);border-radius:10px;padding:11px 13px;margin-bottom:8px;border-left:3px solid var(--accent);';
+      el.innerHTML = `<div style="font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;" class="task-type ${tc[t.type]||''}">${tl[t.type]||'Outro'} · Dia ${t._targetDay}</div><div style="font-size:13px;color:var(--text);line-height:1.4;">${t.title}</div>`;
+      preview.appendChild(el);
+    });
+
+    document.getElementById('importResult').style.display = 'block';
+    document.getElementById('importSaveBtn').style.display = 'block';
+    document.getElementById('importLoading').style.display = 'none';
+
+  } catch(err) {
+    document.getElementById('importLoading').style.display = 'none';
+    document.getElementById('importAnalyzeBtn').style.display = 'block';
+    notify('⚠️', 'Erro ao analisar. Tente novamente.');
+    console.error(err);
+  }
+}
+
+function saveImported() {
+  if (!importedTasks.length) return;
+
+  const s = load();
+  const customs = s._customs || {};
+
+  importedTasks.forEach(t => {
+    const day = t._targetDay;
+    if (!customs[day]) customs[day] = [];
+    const { _targetDay, ...task } = t;
+    customs[day].push(task);
+  });
+
+  s._customs = customs;
+  save(s);
+
+  closeImportSheet();
+  notify('✨', `${importedTasks.length} tarefa${importedTasks.length>1?'s':''} importada${importedTasks.length>1?'s':''}!`);
+  importedTasks = [];
+  renderTasks();
+  renderCal();
+}
+
 </script>
 </body>
 </html>
